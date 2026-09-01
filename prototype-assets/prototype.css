@@ -1,0 +1,194 @@
+/* ==========================================================================
+   PROTOTYPE ADDITIONS — Primient news consolidation
+   --------------------------------------------------------------------------
+   Everything new lives in this one file so it is easy to see what changed.
+   Nothing in the original site stylesheets has been edited.
+
+   Covers:
+     1. Category pills
+     2. Author byline
+     3. Category filter list (replaces the old "By Date" dropdown)
+     4. Filtered-grid tidy-up
+   ========================================================================== */
+
+
+/* 1. CATEGORY PILLS =======================================================
+   Colours are taken from the existing brand palette and each pairing meets
+   WCAG AA contrast. To add a category, copy one block and pick a background.
+   -------------------------------------------------------------------------- */
+
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.category-pill--press-release {          /* 12.6:1 */
+  background-color: var(--brand-blue);
+  color: var(--white);
+}
+
+.category-pill--news {                   /* 5.2:1 */
+  background-color: var(--green);
+  color: #0c2a0a;
+}
+
+.category-pill--blog {                   /* 12.0:1 */
+  background-color: var(--yellow);
+  color: var(--brand-blue);
+}
+
+
+/* 2. AUTHOR BYLINE ========================================================
+   Optional. Cards and articles without an author simply omit the markup.
+   -------------------------------------------------------------------------- */
+
+.article-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.article-author {
+  color: var(--brand-blue);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.article-author-title {
+  color: var(--dark-gray);
+  font-weight: 400;
+}
+
+/* slightly roomier on the article page itself */
+.article-meta-row.profile {
+  margin-top: 6px;
+  margin-bottom: 14px;
+}
+
+.article-meta-row.profile .article-author {
+  font-size: 16px;
+}
+
+
+/* 3. CATEGORY FILTER ======================================================
+   Replaces the "By Date" month/year dropdown in the overview sidebar.
+   -------------------------------------------------------------------------- */
+
+.category-filter {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  /* the old "By Date" dropdown carried this min-width and it was what kept
+     the sidebar column from collapsing, so it has to live here now */
+  min-width: 240px;
+}
+
+.category-filter-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid var(--borders-color);
+  border-radius: 25px;
+  padding: 10px 20px;
+  color: var(--brand-blue);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background-color .2s, border-color .2s, color .2s;
+}
+
+.category-filter-link:hover {
+  border-color: var(--brand-blue);
+  background-color: #f2f5f4;
+  text-decoration: none;
+}
+
+.category-filter-link.is-active {
+  border-color: var(--brand-blue);
+  background-color: var(--brand-blue);
+  color: var(--white);
+  font-weight: 700;
+}
+
+.category-filter-link:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.category-filter-count {
+  font-size: 14px;
+  font-weight: 400;
+  opacity: .75;
+}
+
+/* hides a card that does not match the active category */
+.amsd-item.is-hidden {
+  display: none !important;
+}
+
+.category-filter-empty {
+  width: 100%;
+  padding: 40px 0;
+  color: var(--dark-gray);
+  font-size: 18px;
+}
+
+
+/* 4. FILTERED-GRID TIDY-UP ================================================
+   The newest article normally runs full width. Inside a filtered view that
+   lone wide card looks out of place, so every card drops to the half-width
+   grid treatment instead.
+   -------------------------------------------------------------------------- */
+
+.amsd-list-items-wrapper.is-filtered .amsd-item.first {
+  flex-flow: column;
+  align-items: flex-start;
+  width: 47.5%;
+}
+
+.amsd-list-items-wrapper.is-filtered .amsd-item.first .amsd-image-link.first,
+.amsd-list-items-wrapper.is-filtered .amsd-item.first .amsd-text-wrapper.first {
+  width: 100%;
+}
+
+.amsd-list-items-wrapper.is-filtered .amsd-item.first .amsd-image-link.first img {
+  display: none;
+}
+
+@media screen and (max-width: 767px) {
+  .amsd-list-items-wrapper.is-filtered .amsd-item.first {
+    width: 100%;
+  }
+}
+
+
+/* mobile: the sidebar sits above the list, so let the filters breathe */
+@media screen and (max-width: 991px) {
+  .category-filter {
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .category-filter-link {
+    flex: 0 1 auto;
+    width: auto;
+  }
+}

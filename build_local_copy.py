@@ -4,9 +4,18 @@
 import os, re, sys, urllib.request, urllib.parse, hashlib, shutil
 
 PAGE = "https://primient.com/news"
+A = "https://primient.com/news/article/"
 PAGES = [
     ("https://primient.com/news", "index.html"),
-    ("https://primient.com/news/article/2026/07/primient-2025-impact-report", "article.html"),
+    (A + "2026/07/primient-2025-impact-report", "article-impact-report.html"),
+    (A + "2026/06/primient-earns-great-place-to-work-certification-across-the-u-s-poland-and-brazil",
+        "article-great-place-to-work.html"),
+    (A + "2026/06/truenorthcollective", "article-truenorth-collective.html"),
+    (A + "2026/06/primient-lafayette-and-dayton-plants-earn-cra-safety-awards",
+        "article-lafayette-dayton-safety.html"),
+    (A + "2026/04/ima-recognizes-primient-as-centennial-manufacturer-1", "article-ima-centennial.html"),
+    (A + "2026/04/primient-launches-biosolutions-business-unit", "article-biosolutions.html"),
+    (A + "2026/03/cibo-primient-partnership", "article-cibo-partnership.html"),
 ]
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "primient-news")
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -18,7 +27,8 @@ EXT_DIR = {
 }
 IMG_EXT = {".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp", ".ico", ".avif"}
 
-cache = {}   # absolute url -> local path relative to OUT
+cache = {}       # absolute url -> local path relative to OUT
+by_content = {}  # content hash -> local path, so cache-buster variants share one file
 failed = []
 
 
@@ -84,8 +94,15 @@ def grab(url, base_url):
         failed.append((key, str(e)))
         return None
 
+    # the site serves the same stylesheet under many ?m=... values; keep one copy
+    digest = hashlib.md5(data).hexdigest()
+    if digest in by_content:
+        cache[key] = by_content[digest]
+        return cache[key]
+
     dest = local_name(key, ctype)
     cache[key] = dest
+    by_content[digest] = dest
     full = os.path.join(OUT, dest)
     os.makedirs(os.path.dirname(full), exist_ok=True)
 
