@@ -1,0 +1,13 @@
+<svg id="P" xmlns="http://www.w3.org/2000/svg" width="203.323" height="312.151" viewBox="0 0 203.323 312.151">
+  <path id="Path_1" data-name="Path 1" d="M2,141.595V98.16A51.3,51.3,0,0,1,53.253,47.1H96.688V90.535a51.253,51.253,0,0,1-51.253,51.06Z" transform="translate(-2 170.557)" fill="#06f270"/>
+  <g id="Group_17" data-name="Group 17">
+    <path id="Path_2" data-name="Path 2" d="M119.045,96.495A94.5,94.5,0,0,0,24.55,2V96.495Z" transform="translate(84.278 -2)" fill="#243d3a"/>
+    <path id="Path_3" data-name="Path 3" d="M24.55,119.045A94.5,94.5,0,0,0,119.045,24.55H24.55Z" transform="translate(84.278 84.278)" fill="#00ecfd"/>
+    <g id="Block" transform="translate(0 108.828)">
+      <rect id="Rectangle_1" data-name="Rectangle 1" width="94.495" height="23.6" transform="translate(0 35.423)" fill="#243d3a"/>
+      <rect id="Rectangle_2" data-name="Rectangle 2" width="94.495" height="23.6" transform="translate(0 70.847)" fill="#243d3a"/>
+      <rect id="Rectangle_5" data-name="Rectangle 5" width="94.495" height="23.6" fill="#243d3a"/>
+    </g>
+    <path id="Path_11" data-name="Path 11" d="M49.247,96.495h0A47.247,47.247,0,1,1,96.495,49.247,47.247,47.247,0,0,1,49.247,96.495" transform="translate(-2 -2)" fill="#f2e711"/>
+  </g>
+</svg>

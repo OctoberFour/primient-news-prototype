@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""Build a tidy, self-contained local copy of https://primient.com/news for prototyping."""
+
+import os, re, sys, urllib.request, urllib.parse, hashlib, shutil
+
+PAGE = "https://primient.com/news"
+PAGES = [
+    ("https://primient.com/news", "index.html"),
+    ("https://primient.com/news/article/2026/07/primient-2025-impact-report", "article.html"),
+]
+OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "primient-news")
+UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+EXT_DIR = {
+    ".css": "css", ".js": "js",
+    ".woff": "fonts", ".woff2": "fonts", ".ttf": "fonts", ".eot": "fonts", ".otf": "fonts",
+}
+IMG_EXT = {".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp", ".ico", ".avif"}
+
+cache = {}   # absolute url -> local path relative to OUT
+failed = []
+
+
+def fetch(url):
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Referer": PAGE})
+    with urllib.request.urlopen(req, timeout=45) as r:
+        return r.read(), r.headers.get("Content-Type", "")
+
+
+def local_name(url, ctype):
+    """Pick a clean folder + filename for an asset URL."""
+    path = urllib.parse.urlparse(url).path
+    base = urllib.parse.unquote(os.path.basename(path)) or "asset"
+    ext = os.path.splitext(base)[1].lower()
+
+    # trust Content-Type over the URL extension (the site serves .scss as text/css)
+    ct = ctype.split(";")[0].strip().lower()
+    if ct == "text/css" and ext != ".css":
+        base, ext = os.path.splitext(base)[0] + ".css", ".css"
+
+    if not ext:  # e.g. /image/238/600 -> derive from Content-Type
+        ct = ctype.split(";")[0].strip()
+        ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/svg+xml": ".svg",
+               "image/gif": ".gif", "image/webp": ".webp", "text/css": ".css",
+               "application/javascript": ".js", "text/javascript": ".js"}.get(ct, ".bin")
+        # /image/238/600 -> image-238-600.jpg
+        base = "-".join(p for p in path.strip("/").split("/") if p) + ext
+
+    folder = EXT_DIR.get(ext, "images" if ext in IMG_EXT else "assets")
+    base = re.sub(r"[^A-Za-z0-9._-]+", "-", base)
+
+    dest = os.path.join(folder, base)
+    # de-duplicate distinct URLs that share a basename
+    if any(v == dest for v in cache.values()):
+        stem, e = os.path.splitext(base)
+        dest = os.path.join(folder, f"{stem}-{hashlib.md5(url.encode()).hexdigest()[:6]}{e}")
+    return dest
+
+
+def rel(from_file, to_file):
+    return os.path.relpath(to_file, os.path.dirname(from_file)).replace(os.sep, "/")
+
+
+def grab(url, base_url):
+    """Download url (resolved against base_url); return local path relative to OUT."""
+    abs_url = urllib.parse.urljoin(base_url, url)
+    if abs_url.startswith("//"):
+        abs_url = "https:" + abs_url
+    if not abs_url.startswith(("http://", "https://")):
+        return None
+    key = abs_url.split("#")[0]
+    if key in cache:
+        return cache[key]
+    # percent-encode spaces and other stray characters in the path
+    _p = urllib.parse.urlsplit(key)
+    key = urllib.parse.urlunsplit(_p._replace(path=urllib.parse.quote(_p.path, safe="/%@:+,;=$&()!*'")))
+    if key in cache:
+        return cache[key]
+
+    try:
+        data, ctype = fetch(key)
+    except Exception as e:
+        failed.append((key, str(e)))
+        return None
+
+    dest = local_name(key, ctype)
+    cache[key] = dest
+    full = os.path.join(OUT, dest)
+    os.makedirs(os.path.dirname(full), exist_ok=True)
+
+    if dest.endswith(".css"):
+        data = rewrite_css(data.decode("utf-8", "replace"), key, dest).encode("utf-8")
+
+    with open(full, "wb") as f:
+        f.write(data)
+    print(f"  {dest:<52} <- {key}")
+    return dest
+
+
+CSS_URL = re.compile(r"""url\(\s*(['"]?)([^'")]+)\1\s*\)""")
+# bare-string form only; the `@import url(...)` form is handled by CSS_URL below
+CSS_IMPORT = re.compile(r"""@import\s+(['"])([^'"]+)\1""")
+
+
+def rewrite_css(text, css_url, css_dest):
+    def sub_url(m):
+        q, target = m.group(1), m.group(2).strip()
+        if target.startswith(("data:", "#")):
+            return m.group(0)
+        got = grab(target, css_url)
+        return m.group(0) if not got else f"url({q}{rel(css_dest, got)}{q})"
+
+    def sub_import(m):
+        got = grab(m.group(2), css_url)
+        return m.group(0) if not got else f'@import "{rel(css_dest, got)}"'
+
+    return CSS_URL.sub(sub_url, CSS_IMPORT.sub(sub_import, text))
+
+
+def build_page(page_url, index):
+    print(f"\nFetching {page_url} -> {index}")
+    html = fetch(page_url)[0].decode("utf-8", "replace")
+    PAGE = page_url
+
+    # --- strip analytics / tag-manager so the local copy doesn't phone home ---
+    html = re.sub(r'<script[^>]*googletagmanager\.com[^>]*>\s*</script>', "", html, flags=re.I)
+    html = re.sub(r'<script[^>]*src="/modules/seo/analytics[^"]*"[^>]*>\s*</script>', "", html, flags=re.I)
+    html = re.sub(r'<noscript>\s*<iframe[^>]*googletagmanager[^>]*>.*?</iframe>\s*</noscript>',
+                  "", html, flags=re.I | re.S)
+    html = re.sub(r"<script\b[^>]*>(?:(?!</script>).)*?(?:gtag\(|dataLayer|GTM-)(?:(?!</script>).)*?</script>",
+                  "", html, flags=re.I | re.S)
+
+    print("Downloading assets...")
+
+    # <link href> stylesheets + icons, <script src>, <img src>
+    def sub_attr(m):
+        attr, q, val = m.group(1), m.group(2), m.group(3)
+        if val.startswith(("data:", "#", "mailto:", "tel:", "javascript:")):
+            return m.group(0)
+        got = grab(val, PAGE)
+        return m.group(0) if not got else f'{attr}={q}{rel(index, got)}{q}'
+
+    html = re.sub(r'(?<=<link)((?:[^>]*?)\shref)=(["\'])([^"\']+)\2',
+                  lambda m: m.group(0), html)  # placeholder, handled below
+
+    # stylesheets + favicons
+    def link_tag(m):
+        tag = m.group(0)
+        if not re.search(r'rel=["\'](?:stylesheet|icon|shortcut icon|apple-touch-icon)', tag, re.I):
+            return tag
+        return re.sub(r'(href)=(["\'])([^"\']+)\2', sub_attr, tag)
+    html = re.sub(r'<link\b[^>]*>', link_tag, html)
+
+    html = re.sub(r'<script\b[^>]*?\b(src)=(["\'])([^"\']+)\2[^>]*>',
+                  lambda m: re.sub(r'(src)=(["\'])([^"\']+)\2', sub_attr, m.group(0)), html)
+
+    html = re.sub(r'<img\b[^>]*>',
+                  lambda m: re.sub(r'\b(src|data-src)=(["\'])([^"\']+)\2', sub_attr, m.group(0)), html)
+
+    # inline style="... background-image: url(...) ..."
+    def inline_style(m):
+        body = m.group(2)
+        new = CSS_URL.sub(
+            lambda u: (lambda g: m.group(0) if not g else f"url({u.group(1)}{rel(index, g)}{u.group(1)})")(
+                None if u.group(2).startswith("data:") else grab(u.group(2), PAGE)),
+            body)
+        return f'style={m.group(1)}{new}{m.group(1)}'
+    html = re.sub(r'style=(["\'])([^"\']*url\([^"\']*)\1', inline_style, html)
+
+    # make site-internal page links absolute so they still work when clicked
+    html = re.sub(r'(<a\b[^>]*?\bhref=)(["\'])(/[^"\']*)\2',
+                  lambda m: f'{m.group(1)}{m.group(2)}https://primient.com{m.group(3)}{m.group(2)}', html)
+
+    with open(os.path.join(OUT, index), "w", encoding="utf-8") as f:
+        f.write(html)
+
+
+def main():
+    if os.path.isdir(OUT):
+        shutil.rmtree(OUT)
+    os.makedirs(OUT)
+
+    for url, name in PAGES:
+        build_page(url, name)
+
+    print(f"\nWrote {len(cache)} assets to {OUT}")
+    if failed:
+        print(f"\n{len(failed)} failed:")
+        for u, e in failed:
+            print(f"  {u}  ({e})")
+
+
+if __name__ == "__main__":
+    main()
