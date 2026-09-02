@@ -1,20 +1,24 @@
 # Primient News — consolidation prototype
 
 A working prototype of the requested news changes, built on a local copy of
-<https://primient.com/news> (captured 2026-09-01).
+<https://primient.com/news> captured 1 September 2026.
 
-## How to open it
+**Live version:** <https://octoberfour.github.io/primient-news-prototype/>
 
-Because the filtering reads the URL, open it through a small local web server
-rather than double-clicking the file. In Terminal:
+For implementation notes — what a developer needs to build this for real — see
+[HANDOFF.md](HANDOFF.md).
+
+## How to open it locally
+
+The filtering reads the URL, so serve the folder rather than double-clicking the
+file. In Terminal:
 
 ```
 cd primient-news
 python3 -m http.server 8000
 ```
 
-Then visit <http://localhost:8000> in your browser. Press `Ctrl+C` in Terminal
-to stop it.
+Then visit <http://localhost:8000>. Press `Ctrl+C` to stop.
 
 ## What to try
 
@@ -39,61 +43,81 @@ to each. Every article carries a `data-category` attribute.
 markup as the existing About / Sustainability / Contact dropdowns, so it inherits
 their styling and behaviour. Each item deep-links to a pre-filtered view.
 
-**Category pills.** Every card shows a pill. Colours come from the existing brand
-palette and each one meets WCAG AA contrast:
+**Category pills.** Every card and every article page shows a pill. Colours come
+from the existing brand palette and each pairing meets WCAG AA contrast:
 
-| Category | Background | Text |
-| --- | --- | --- |
-| Press Release | `--brand-blue` `#243d3a` | white |
-| News | `--green` `#37aa31` | `#0c2a0a` |
-| Blog | `--yellow` `#f2e711` | `--brand-blue` |
+| Category | Background | Text | Contrast |
+| --- | --- | --- | --- |
+| Press Release | `--brand-blue` `#243d3a` | white | 12.6:1 |
+| News | `--green` `#37aa31` | `#0c2a0a` | 5.2:1 |
+| Blog | `--yellow` `#f2e711` | `--brand-blue` | 12.0:1 |
 
 **Optional author.** Where an author exists, the name shows next to the pill on
-the card, and name + title on the article page. Cards without an author simply
+the card, and name + title on the article page. Articles without an author simply
 omit it — see the press releases.
-
-All seven articles exist locally as their own page, each carrying its pill and
-byline. `article.html` is a redirect kept so an earlier shared link still works.
 
 **Filtered-view tidy-up.** The newest article normally runs full width. In a
 filtered view that lone wide card looked out of place, so all cards drop to the
 uniform half-width treatment. Compare "All Articles" with "News" to see it.
 
+## The pages
+
+All seven articles exist as their own page, each carrying its pill and byline.
+
+| File | Category | Author |
+| --- | --- | --- |
+| `index.html` | — | the overview |
+| `article-impact-report.html` | News | Sarah Whitfield |
+| `article-great-place-to-work.html` | Press Release | — |
+| `article-truenorth-collective.html` | Press Release | — |
+| `article-lafayette-dayton-safety.html` | Blog | Dana Okafor |
+| `article-ima-centennial.html` | News | — |
+| `article-biosolutions.html` | Press Release | — |
+| `article-cibo-partnership.html` | Blog | Marcus Reyes |
+
+`article.html` is a redirect to the Impact Report, kept so an earlier shared
+link still works.
+
 ## Where the new code lives
 
-All additions are isolated in two new files. **No original site file was
-restyled** — the existing stylesheets are untouched.
+All additions are isolated in two files. **No original site stylesheet was
+edited.**
 
 | File | Purpose |
 | --- | --- |
-| `css/prototype.css` | Pills, byline, category filter, filtered-grid tidy-up. Commented in four numbered sections. |
-| `js/category-filter.js` | The filtering itself. The `CATEGORIES` list at the top is the single place to add or rename one. |
-
-`index.html` and `article.html` were edited in place to add the nav dropdown,
-the sidebar filter, and the pill/byline markup on each card.
-
-### Adding or renaming a category
-
-1. Add it to `CATEGORIES` in `js/category-filter.js`
-2. Add a `.category-pill--your-slug` colour block in `css/prototype.css`
-3. Add a link to the nav dropdown and the sidebar list in `index.html`
+| `css/prototype.css` | Pills, byline, category filter, filtered-grid tidy-up. Four commented sections. |
+| `js/category-filter.js` | The filtering. The `CATEGORIES` list at the top is the one place to add or rename one. |
 
 ## Placeholder content — needs real data
 
-These were invented to demonstrate the design and are **not** real Primient data:
+Invented to demonstrate the design. **Not** real Primient data:
 
-- **Category names.** Used Press Release / News / Blog from the brief. Marked TBD.
+- **Category names.** Press Release / News / Blog, from the brief. Still TBD.
 - **Which article is in which category.** Assigned by eye to give each category
   a couple of entries.
 - **Author names and titles.** Sarah Whitfield (Chief Sustainability Officer),
-  Dana Okafor (VP of Manufacturing Safety), Marcus Reyes (Director of
+  Dana Okafor (VP of Manufacturing Safety) and Marcus Reyes (Director of
   Regenerative Agriculture) are made up.
+
+All three live in one place: the `ARTICLES` list at the top of
+`apply_prototype.py`.
+
+## Rebuilding
+
+The prototype is reproducible, not hand-edited. Two steps:
+
+```
+python3 build_local_copy.py    # re-downloads the 8 pages from primient.com
+python3 apply_prototype.py     # re-applies every change described above
+```
+
+The first step **clears the site folder**, so the hand-written sources
+(`prototype.css`, `category-filter.js`, and this README) live in
+`prototype-assets/` and are copied back in by the second step.
 
 ## Notes on the local copy
 
 - Analytics and Tag Manager were stripped so it doesn't send tracking data.
+- Both pages carry `noindex, nofollow`, and the `canonical` tag pointing at the
+  real primient.com was removed, so this copy can't be confused for the live site.
 - A faint overlay flashes on load — that's the site's own page-loader fading out.
-
-Re-pull a clean copy of the live pages any time with
-`python3 ../.context/build_local_copy.py` — note this **overwrites** the folder
-and discards the prototype changes.

@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
 """Build a tidy, self-contained local copy of https://primient.com/news for prototyping."""
 
-import os, re, sys, urllib.request, urllib.parse, hashlib, shutil
+import os, re, sys, glob, urllib.request, urllib.parse, hashlib, shutil
+
+
+def resolve_out():
+    """Where the site lives.
+
+    Working repo: this script is in .context/, the site is in ../primient-news/.
+    Handoff package: this script sits beside the site it builds.
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    sibling = os.path.join(os.path.dirname(here), "primient-news")
+    return sibling if os.path.isdir(sibling) else here
 
 PAGE = "https://primient.com/news"
 A = "https://primient.com/news/article/"
@@ -17,7 +28,7 @@ PAGES = [
     (A + "2026/04/primient-launches-biosolutions-business-unit", "article-biosolutions.html"),
     (A + "2026/03/cibo-primient-partnership", "article-cibo-partnership.html"),
 ]
-OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "primient-news")
+OUT = resolve_out()
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
@@ -194,9 +205,14 @@ def build_page(page_url, index):
 
 
 def main():
-    if os.path.isdir(OUT):
-        shutil.rmtree(OUT)
-    os.makedirs(OUT)
+    # Clear only what this script generates. Deleting the whole folder would
+    # take the docs, the scripts and prototype-assets/ with it in the handoff
+    # layout, where they sit alongside the site.
+    os.makedirs(OUT, exist_ok=True)
+    for d in ("css", "js", "images", "fonts", "assets"):
+        shutil.rmtree(os.path.join(OUT, d), ignore_errors=True)
+    for f in glob.glob(os.path.join(OUT, "*.html")):
+        os.remove(f)
 
     for url, name in PAGES:
         build_page(url, name)

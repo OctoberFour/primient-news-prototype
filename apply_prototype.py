@@ -17,9 +17,12 @@ Changes applied:
 import os, re, sys, shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(os.path.dirname(HERE), "primient-news")
-# hand-written prototype files, kept outside primient-news/ because
-# build_local_copy.py clears that folder on every run
+# Working repo: this script is in .context/, the site is in ../primient-news/.
+# Handoff package: this script sits beside the site.
+_SIBLING = os.path.join(os.path.dirname(HERE), "primient-news")
+OUT = _SIBLING if os.path.isdir(_SIBLING) else HERE
+# hand-written sources, kept out of the way because build_local_copy.py
+# clears the generated files on every run
 SRC = os.path.join(HERE, "prototype-assets")
 
 # The single source of truth for the prototype's placeholder data.
@@ -170,9 +173,10 @@ def main():
 
     for src, dst in [("prototype.css", "css/prototype.css"),
                      ("category-filter.js", "js/category-filter.js"),
-                     ("README.md", "README.md")]:
+                     ("README.md", "README.md"),
+                     ("HANDOFF.md", "HANDOFF.md")]:
         shutil.copyfile(os.path.join(SRC, src), os.path.join(OUT, dst))
-    print("copied prototype.css, category-filter.js, README.md")
+    print("copied prototype.css, category-filter.js, README.md, HANDOFF.md")
 
     build_overview()
     print("index.html            -> nav dropdown, category filter, 7 pills, local article links")
