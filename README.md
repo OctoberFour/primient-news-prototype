@@ -1,7 +1,7 @@
 # Primient News — consolidation prototype
 
 A working prototype of the requested news changes, built on a local copy of
-<https://primient.com/news> captured 1 September 2026.
+<https://primient.com/news> captured 15 September 2026.
 
 **Live version:** <https://octoberfour.github.io/primient-news-prototype/>
 
@@ -56,6 +56,17 @@ from the existing brand palette and each pairing meets WCAG AA contrast:
 the card, and name + title on the article page. Articles without an author simply
 omit it — see the press releases.
 
+**Author block at the foot of the article.** News and blog articles with an
+author close with a block carrying the headshot, name, title, a short bio and
+social links. It reuses the leadership page's own classes — the circular `staff`
+photo, `member-item-heading` / `member-item-sub-heading`, and the footer social
+icon — so it reads as part of the existing design system.
+
+Every part is independently optional: no author means no block at all, and an
+author with no headshot, no bio or no social links just drops that piece. The
+three authors deliberately differ — three social links, two, and two — to show
+that.
+
 **Filtered-view tidy-up.** The newest article normally runs full width. In a
 filtered view that lone wide card looked out of place, so all cards drop to the
 uniform half-width treatment. Compare "All Articles" with "News" to see it.
@@ -63,17 +74,18 @@ uniform half-width treatment. Compare "All Articles" with "News" to see it.
 ## The pages
 
 All seven articles exist as their own page, each carrying its pill and byline.
+The three with an author also carry the author block.
 
-| File | Category | Author |
-| --- | --- | --- |
-| `index.html` | — | the overview |
-| `article-impact-report.html` | News | Sarah Whitfield |
-| `article-great-place-to-work.html` | Press Release | — |
-| `article-truenorth-collective.html` | Press Release | — |
-| `article-lafayette-dayton-safety.html` | Blog | Dana Okafor |
-| `article-ima-centennial.html` | News | — |
-| `article-biosolutions.html` | Press Release | — |
-| `article-cibo-partnership.html` | Blog | Marcus Reyes |
+| File | Category | Author | Author block |
+| --- | --- | --- | --- |
+| `index.html` | — | the overview | — |
+| `article-chicago-bears.html` | Press Release | — | — |
+| `article-impact-report.html` | News | Sarah Whitfield | photo, bio, 3 links |
+| `article-great-place-to-work.html` | Press Release | — | — |
+| `article-truenorth-collective.html` | Blog | Marcus Reyes | photo, bio, 2 links |
+| `article-lafayette-dayton-safety.html` | Blog | Dana Okafor | photo, bio, 2 links |
+| `article-ima-centennial.html` | News | — | — |
+| `article-biosolutions.html` | Press Release | — | — |
 
 `article.html` is a redirect to the Impact Report, kept so an earlier shared
 link still works.
@@ -85,7 +97,7 @@ edited.**
 
 | File | Purpose |
 | --- | --- |
-| `css/prototype.css` | Pills, byline, category filter, filtered-grid tidy-up. Four commented sections. |
+| `css/prototype.css` | Pills, byline, category filter, filtered-grid tidy-up, author block. Five commented sections. |
 | `js/category-filter.js` | The filtering. The `CATEGORIES` list at the top is the one place to add or rename one. |
 
 ## Placeholder content — needs real data
@@ -95,9 +107,13 @@ Invented to demonstrate the design. **Not** real Primient data:
 - **Category names.** Press Release / News / Blog, from the brief. Still TBD.
 - **Which article is in which category.** Assigned by eye to give each category
   a couple of entries.
-- **Author names and titles.** Sarah Whitfield (Chief Sustainability Officer),
-  Dana Okafor (VP of Manufacturing Safety) and Marcus Reyes (Director of
-  Regenerative Agriculture) are made up.
+- **Author names, titles and bios.** Sarah Whitfield (Chief Sustainability
+  Officer), Dana Okafor (VP of Manufacturing Safety) and Marcus Reyes (Director
+  of Regenerative Agriculture) are made up, as are their bio paragraphs.
+- **Headshots.** All three use `images/staff-placeholder.jpg`, which is
+  Primient's own placeholder avatar — real headshots are needed.
+- **Social links.** All point at `#`. They go nowhere on purpose, since the
+  people are not real.
 
 All three live in one place: the `ARTICLES` list at the top of
 `apply_prototype.py`.
@@ -121,3 +137,12 @@ The first step **clears the site folder**, so the hand-written sources
 - Both pages carry `noindex, nofollow`, and the `canonical` tag pointing at the
   real primient.com was removed, so this copy can't be confused for the live site.
 - A faint overlay flashes on load — that's the site's own page-loader fading out.
+
+## A note on the live site moving
+
+This copy is a snapshot. Between the first capture on 1 September and this one,
+Primient published the Chicago Bears partnership article and **added pagination
+to the live news page**, which pushed the CIBO article to page two — so it is no
+longer in this prototype. Re-running the two build steps re-syncs to whatever is
+live, but the `ARTICLES` list in `apply_prototype.py` has to match the cards on
+page one, in order, or the script will stop and tell you so.

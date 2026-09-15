@@ -27,21 +27,57 @@ SRC = os.path.join(HERE, "prototype-assets")
 
 # The single source of truth for the prototype's placeholder data.
 # `key` just has to appear in that card's markup on the overview page.
+#
+# Author fields are all optional and independent: an article can have no author
+# at all (the press releases), or an author with no headshot, no bio, or no
+# social links. Anything missing is simply left out of the markup.
+#   author / title   -> byline next to the pill, on the card and the article
+#   photo / bio /
+#   socials          -> the author block at the foot of the article
+# `socials` entries are (font-awesome icon class, label, url).
+PLACEHOLDER_PHOTO = "images/staff-placeholder.jpg"
+
 ARTICLES = [
+    dict(file="article-chicago-bears.html",        key="primient-chicago-bears-history-partnership",
+         cat="press-release", label="Press Release", author=None, title=None),
+
     dict(file="article-impact-report.html",        key="primient-2025-impact-report",
-         cat="news",          label="News",          author="Sarah Whitfield", title="Chief Sustainability Officer"),
+         cat="news",          label="News",
+         author="Sarah Whitfield", title="Chief Sustainability Officer",
+         photo=PLACEHOLDER_PHOTO,
+         bio="Sarah leads Primient's environmental, social and governance strategy, "
+             "covering decarbonisation targets, regenerative agriculture and the annual "
+             "Impact Report. She joined Primient in 2022.",
+         socials=[("fa-brands fa-linkedin-in", "LinkedIn", "#"),
+                  ("fa-brands fa-x-twitter", "X", "#"),
+                  ("fa-solid fa-envelope", "Email", "#")]),
+
     dict(file="article-great-place-to-work.html",  key="primient-earns-great-place-to-work",
          cat="press-release", label="Press Release", author=None, title=None),
+
     dict(file="article-truenorth-collective.html", key="truenorthcollective",
-         cat="press-release", label="Press Release", author=None, title=None),
+         cat="blog",          label="Blog",
+         author="Marcus Reyes", title="Director of Regenerative Agriculture",
+         photo=PLACEHOLDER_PHOTO,
+         bio="Marcus runs Primient's regenerative agriculture programme, working with "
+             "growers across the U.S. Midwest on practice change and Scope 3 reduction.",
+         socials=[("fa-brands fa-linkedin-in", "LinkedIn", "#"),
+                  ("fa-brands fa-x-twitter", "X", "#")]),
+
     dict(file="article-lafayette-dayton-safety.html", key="primient-lafayette-and-dayton-plants-earn-cra",
-         cat="blog",          label="Blog",          author="Dana Okafor", title="VP of Manufacturing Safety"),
+         cat="blog",          label="Blog",
+         author="Dana Okafor", title="VP of Manufacturing Safety",
+         photo=PLACEHOLDER_PHOTO,
+         bio="Dana oversees safety performance across Primient's manufacturing network, "
+             "and writes about the practices behind the company's plant-level safety record.",
+         socials=[("fa-brands fa-linkedin-in", "LinkedIn", "#"),
+                  ("fa-solid fa-envelope", "Email", "#")]),
+
     dict(file="article-ima-centennial.html",       key="ima-recognizes-primient-as-centennial",
-         cat="news",          label="News",          author=None, title=None),
+         cat="news",          label="News",        author=None, title=None),
+
     dict(file="article-biosolutions.html",         key="primient-launches-biosolutions-business-unit",
          cat="press-release", label="Press Release", author=None, title=None),
-    dict(file="article-cibo-partnership.html",     key="cibo-primient-partnership",
-         cat="blog",          label="Blog",          author="Marcus Reyes", title="Director of Regenerative Agriculture"),
 ]
 
 NAV_DROPDOWN = (
@@ -105,6 +141,9 @@ def pill(a):
 
 def build_overview():
     s = read("index.html")
+    if 'category-filter' in s:
+        print("index.html            -> already applied, skipped")
+        return s
     s = common(s)
 
     # replace the "By Date" month/year dropdown with the category filter
@@ -144,6 +183,43 @@ def build_overview():
     return s
 
 
+def author_block(a):
+    """The author block at the foot of an article.
+
+    Built from the classes the leadership page already uses — the circular
+    `staff` photo, `member-item-heading` / `member-item-sub-heading`, and the
+    footer social icon — so it reads as part of the existing design system
+    rather than a new component. Every part is optional.
+    """
+    if not a.get("author"):
+        return ''
+
+    photo = ''
+    if a.get("photo"):
+        photo = (f'\n          <div class="amsd-image-link grid staff author-bio-photo">'
+                 f'<div class="amsd-image grid staff" style="background-image: url({a["photo"]})"></div>'
+                 f'</div>')
+
+    title = f'\n            <div class="heading heading-3 member-item-sub-heading">{a["title"]}</div>' if a.get("title") else ''
+    bio = f'\n            <p class="author-bio-description">{a["bio"]}</p>' if a.get("bio") else ''
+
+    socials = ''
+    if a.get("socials"):
+        icons = ''.join(
+            f'<a class="social-media-icon footer larger" href="{url}" '
+            f'aria-label="{a["author"]} on {name}"><i class="{icon}" aria-hidden="true"></i></a>'
+            for icon, name, url in a["socials"])
+        socials = f'\n            <div class="member-socia-media-wrapper author-bio-social">{icons}</div>'
+
+    return (f'      <div class="author-bio">{photo}\n'
+            f'          <div class="author-bio-text">\n'
+            f'            <div class="author-bio-label">About the author</div>\n'
+            f'            <div class="heading heading-2 member-item-heading">{a["author"]}</div>'
+            f'{title}{bio}{socials}\n'
+            f'          </div>\n'
+            f'      </div>\n')
+
+
 def build_article(a):
     s = read(a["file"])
     s = common(s)
@@ -158,10 +234,16 @@ def build_article(a):
         indent = ' ' * (m.start() - s.rfind('\n', 0, m.start()) - 1)
         s = s[:m.start()] + f'{indent}<div class="article-meta-row profile">{pill(a)}{author}</div>\n' + s[m.start():]
 
+    # author block at the foot of the article, above "Back To News"
+    back = '      <div class="back-links-wrapper">'
+    if 'author-bio' not in s and back in s:
+        s = s.replace(back, author_block(a) + back, 1)
+
     # keep in-article links to the six other local articles working
     for other in ARTICLES:
         s = re.sub(r'https://primient\.com/news/article/\d{4}/\d{2}/' + re.escape(other["key"]) + r'[^"]*',
                    other["file"], s)
+    s = s.replace('href="https://primient.com/news" class="cms-btn"', 'href="index.html" class="cms-btn"')
 
     write(a["file"], s)
 
@@ -185,8 +267,9 @@ def main():
         who = a["author"] or "no author"
         print(f'{a["file"]:<38} -> {a["label"]} pill, {who}')
 
-    # the first published link was article.html; keep it working
-    target = ARTICLES[0]["file"]
+    # the first link shared for review was article.html, pointing at the Impact
+    # Report; keep it aimed there rather than at whatever is newest
+    target = "article-impact-report.html"
     write("article.html",
           '<!DOCTYPE html>\n<meta charset="utf-8">\n<meta name="robots" content="noindex, nofollow">\n'
           f'<title>Redirecting…</title>\n<meta http-equiv="refresh" content="0; url={target}">\n'

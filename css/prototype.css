@@ -9,6 +9,7 @@
      2. Author byline
      3. Category filter list (replaces the old "By Date" dropdown)
      4. Filtered-grid tidy-up
+     5. Author block at the foot of an article
    ========================================================================== */
 
 
@@ -190,5 +191,99 @@
   .category-filter-link {
     flex: 0 1 auto;
     width: auto;
+  }
+}
+
+
+/* 5. AUTHOR BLOCK =========================================================
+   Sits at the foot of an article, above "Back To News". Built from classes
+   the leadership page already uses — the circular `staff` photo,
+   `member-item-heading` / `member-item-sub-heading` and the footer social
+   icon — so only the layout below is new.
+
+   Every part is optional. An article with no author renders no block at all;
+   an author with no headshot, bio or social links just drops that piece.
+   -------------------------------------------------------------------------- */
+
+.author-bio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 30px;
+  width: 100%;
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid var(--borders-color);
+}
+
+/* the leadership page uses a 200px circle; an author card at the foot of an
+   article reads better a little smaller */
+.author-bio .amsd-image-link.grid.staff.author-bio-photo {
+  flex: 0 0 auto;
+  width: 140px;
+  height: 140px;
+}
+
+.author-bio-text {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.author-bio-label {
+  margin-bottom: 8px;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* The leadership page uses these at 48px / 30px, which is the same size as the
+   article's own headline. Scaled down so the author sits clearly below the
+   article title in the hierarchy rather than competing with it.
+   `.heading` is in the selector to match the specificity of the site's own
+   `.heading.heading-2.member-item-heading` rule, which otherwise wins. */
+.author-bio .heading.member-item-heading {
+  margin-top: 0;
+  margin-bottom: 2px;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.author-bio .heading.member-item-sub-heading {
+  margin-top: 0;
+  margin-bottom: 14px;
+  color: var(--dark-gray);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: .04em;
+}
+
+.author-bio-description {
+  margin-bottom: 16px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.author-bio-social {
+  margin-top: 0;
+}
+
+.author-bio-social .social-media-icon:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+@media screen and (max-width: 767px) {
+  .author-bio {
+    gap: 20px;
+    margin-top: 40px;
+    padding-top: 30px;
+  }
+
+  .author-bio .amsd-image-link.grid.staff.author-bio-photo {
+    width: 110px;
+    height: 110px;
   }
 }

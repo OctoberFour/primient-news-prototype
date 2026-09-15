@@ -17,6 +17,7 @@ and visual treatment. See [README.md](README.md) for how to run it.
 | Major categories as a nav dropdown, pre-filtered on load | "News" nav dropdown, each item deep-links |
 | Optional author name and title on article records | Byline next to the pill; absent on press releases |
 | Pill on cards and article pages, author alongside | Both, on all seven articles |
+| Author info at the foot of news/blog profiles | Block with headshot, name, title, bio and social links |
 
 ## What the CMS needs
 
@@ -25,8 +26,29 @@ and visual treatment. See [README.md](README.md) for how to run it.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `category` | reference to a category record | Required. Set in Editor on create/edit. |
-| `author_name` | text | **Optional** — press releases publish without it |
-| `author_title` | text | Optional; shown after the name on the article page only |
+| `author` | reference to an author record | **Optional** — press releases publish without one |
+
+Author is better as its own record than as loose fields on the article, because
+the same person writes repeatedly and their headshot and bio should not be
+re-entered and re-edited per article.
+
+**An author record:**
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `name` | text | Required. Used in the byline and the author block. |
+| `title` | text | Optional. Job title. |
+| `headshot` | image | Optional. Square crop; displayed as a circle. |
+| `bio` | rich text or textarea | Optional. Two or three sentences. |
+| `social_links` | repeatable (platform, url) | Optional, zero or more |
+
+Everything except `name` is optional and independently so. The prototype shows
+this: three authors with different numbers of social links, four articles with
+no author at all and therefore no block.
+
+If a separate author record is too much for this phase, the fallback is
+`author_name` / `author_title` / `author_headshot` / `author_bio` directly on the
+article, accepting the duplication.
 
 **A category record**, so Primient can add and rename without a developer:
 
@@ -67,17 +89,33 @@ before specifying new fields.
 2. **Pill colours.** Brand palette, each meeting WCAG AA. If categories multiply
    beyond three or four, this needs a colour system rather than one-off pairings.
 3. **Author on the card vs the article.** Card shows name only; the article page
-   shows name + title. The brief said "author name will display alongside it" on
-   both, so the title on the article page is an addition — confirm it's wanted.
-4. **Category names are still TBD** per the brief's PM note.
+   shows name + title in the byline, then the full block at the foot. The brief
+   said "author name will display alongside it" on both, so the title in the
+   article byline is an addition — confirm it's wanted.
+4. **Author block sizing.** The leadership page renders the name at 48px and the
+   job title at 30px, which is the same size as the article's own headline. The
+   block scales these to 24px / 15px so the author does not compete with the
+   article title, and the circular headshot from 200px to 140px. Both are in
+   `prototype.css` §5.
+5. **Social platforms.** LinkedIn, X and email are shown. Confirm the real set —
+   the site footer uses LinkedIn, Facebook and Instagram.
+6. **Author block placement.** It sits below the article body and above "Back To
+   News". Confirm that, rather than in a sidebar or directly under the byline.
+7. **Category names are still TBD** per the brief's PM note.
 
 ## Not addressed
 
 Out of scope for this prototype, but likely needed in the real build:
 
-- **Pagination / load-more.** Only seven articles exist here, so the full list
-  fits on one page. The real archive is much larger and the old date filter was
-  partly doing this job — removing it makes pagination more important, not less.
+- **Pagination.** Primient added pagination to the live news page (via
+  `jquery.simplePagination`) between 1 and 15 September 2026, so this is now
+  solved on the real site — but it interacts with category filtering and that
+  interaction is **not** designed. Decide explicitly: does choosing a category
+  re-paginate the filtered set server-side, or does the filter only apply to the
+  current page? The second is what a naive client-side implementation gives you,
+  and it is wrong — a reader on "Blog" would see only the blog posts that happen
+  to fall on page one. The prototype sidesteps this by holding all seven articles
+  on a single page.
 - **Filtering more than one category at once**, if that's ever wanted.
 - **Empty state.** `prototype.css` styles a `.category-filter-empty` message, but
   no category is currently empty so it never shows.
@@ -88,6 +126,7 @@ Out of scope for this prototype, but likely needed in the real build:
 
 ## Placeholder data
 
-Author names, author titles, and which article sits in which category are all
-invented. They exist to demonstrate the design and must be replaced. All of it
-is in the `ARTICLES` list at the top of `apply_prototype.py`.
+Author names, titles, bios, and which article sits in which category are all
+invented, and every headshot is Primient's own `staff-placeholder.jpg`. Social
+links point at `#` deliberately, since the people are not real. All of it is in
+the `ARTICLES` list at the top of `apply_prototype.py`.

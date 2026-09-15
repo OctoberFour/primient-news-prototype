@@ -18,6 +18,7 @@ PAGE = "https://primient.com/news"
 A = "https://primient.com/news/article/"
 PAGES = [
     ("https://primient.com/news", "index.html"),
+    (A + "2026/09/primient-chicago-bears-history-partnership", "article-chicago-bears.html"),
     (A + "2026/07/primient-2025-impact-report", "article-impact-report.html"),
     (A + "2026/06/primient-earns-great-place-to-work-certification-across-the-u-s-poland-and-brazil",
         "article-great-place-to-work.html"),
@@ -26,7 +27,6 @@ PAGES = [
         "article-lafayette-dayton-safety.html"),
     (A + "2026/04/ima-recognizes-primient-as-centennial-manufacturer-1", "article-ima-centennial.html"),
     (A + "2026/04/primient-launches-biosolutions-business-unit", "article-biosolutions.html"),
-    (A + "2026/03/cibo-primient-partnership", "article-cibo-partnership.html"),
 ]
 OUT = resolve_out()
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
